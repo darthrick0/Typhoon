@@ -1,71 +1,31 @@
 from pathlib import Path
 import argparse
 from typing import List
-from enum import Enum
 import sys
 import re
+from data_definitions import Token, TokenType
+
 
 ALPHA_NUM_PATTERN = r"[a-zA-Z_][a-zA-Z_0-9]*"
 
 
-class TokenType(Enum):
-    # Single-character tokens.
-    LEFT_PAREN = "LEFT_PAREN"
-    RIGHT_PAREN = "RIGHT_PAREN"
-    LEFT_BRACE = "LEFT_BRACE"
-    RIGHT_BRACE = "RIGHT_BRACE"
-    COMMA = "COMMA"
-    DOT = "DOT"
-    MINUS = "MINUS"
-    PLUS = "PLUS"
-    SEMICOLON = "SEMICOLON"
-    SLASH = "SLASH"
-    STAR = "STAR"
-
-    # One or two character tokens.
-    BANG = "BANG"
-    BANG_EQUAL = "BANG_EQUAL"
-    EQUAL = "EQUAL"
-    EQUAL_EQUAL = "EQUAL_EQUAL"
-    GREATER = "GREATER"
-    GREATER_EQUAL = "GREATER_EQUAL"
-    LESS = "LESS"
-    LESS_EQUAL = "LESS_EQUAL"
-
-    # Literals.
-    IDENTIFIER = "IDENTIFIER"
-    STRING = "STRING"
-    NUMBER = "NUMBER"
-
-    # Keywords.
-    AND = "AND"
-    CLASS = "CLASS"
-    ELSE = "ELSE"
-    FALSE = "FALSE"
-    IF = "IF"
-    OR = "OR"
-    NULL = "NULL"
-    PRINT = "PRINT"
-    RETURN = "RETURN"
-    SUPER = "SUPER"
-    SELF = "SELF"
-    TRUE = "TRUE"
-    VAR = "VAR"
-    WHILE = "WHILE"
-
-    EOF = "EOF"
-
-
-class Token:
-    def __init__(self, type_: TokenType, literal_value: str, lexeme: str, line_no: int):
-        self.type_ = type_
-        self.lexeme: str = lexeme
-        self.line_no: int = line_no
-        self.literal_value = literal_value
-        print(f"Token made with value: {self.literal_value}")
-
-    def __repr__(self):
-        return f"Token(type_={self.type_}, lexeme={self.lexeme}, line_no={self.line_no}, literal_value='{self.literal_value}')"
+keyword_dict = {
+    "and": TokenType.AND,
+    "class": TokenType.CLASS,
+    "else": TokenType.ELSE,
+    "False": TokenType.FALSE,
+    "if": TokenType.IF,
+    "elif": TokenType.ELIF,
+    "or": TokenType.OR,
+    "None": TokenType.NULL,
+    "print": TokenType.PRINT,
+    "return": TokenType.RETURN,
+    "super": TokenType.SUPER,
+    "self": TokenType.SELF,
+    "True": TokenType.TRUE,
+    "var": TokenType.VAR,
+    "while": TokenType.WHILE,
+}
 
 
 def throw_error(error_type: str, line_no: int, context: str):
@@ -95,7 +55,6 @@ def is_identifier(char: str):
 
 
 def tokenize(raw_text: List[str]) -> List[Token]:
-    print(raw_text)
     line_no: int = 1
     tokens: List[Token] = []
     char_index: int = 0
@@ -198,6 +157,9 @@ def tokenize(raw_text: List[str]) -> List[Token]:
                     throw_error("InvalidCharacter", line_no, error_context)
         char_index += 1
 
+    for token in tokens:
+        token.type_ = keyword_dict.get(token.literal_value, token.type_)
+
     return tokens
 
 
@@ -207,7 +169,9 @@ def execute_program(tokens: List[Token]) -> int:  # exit code
 
 
 def main():
-    parser = argparse.ArgumentParser(description="A simple script with arguments.")
+    parser = argparse.ArgumentParser(
+        description="~~~~~  Typhoon Python Interpreter  ~~~~~"
+    )
     parser.add_argument("file", help="file to interpret")
     parser.add_argument("-l", "--log", default=False, help="save build logs to a file")
     args = parser.parse_args()
@@ -215,7 +179,9 @@ def main():
     lines = read_file(args.file)
     tokens = tokenize(lines)
     exit_code = execute_program(tokens)
-    print(exit_code)  # would be nice to have a build log ¯\_(ツ)_/¯
+    print(
+        f"Program Exited with code '{exit_code}'"
+    )  # would be nice to have a build log ¯\_(ツ)_/¯
     sys.exit(exit_code)
 
 
